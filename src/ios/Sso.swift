@@ -7,7 +7,12 @@ import FBSDKLoginKit
 import GoogleSignIn
 import AuthenticationServices
 
-@objc(Sso) class Sso :CDVPlugin, GIDSignInDelegate, ASAuthorizationControllerDelegate {
+@objc(Sso) class Sso :CDVPlugin, GIDSignInDelegate, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
+    @available(iOS 13.0, *)
+    func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+        return (self.webView?.window)!;
+    }
+    
 
     
     var callbackId:String?
@@ -34,7 +39,7 @@ import AuthenticationServices
         let gid = self.commandDelegate.settings["googleclientid"] as? String;
         self.googleSignin = GIDSignIn.sharedInstance();
         
-        self.googleSignin?.clientID = gid;
+//        self.googleSignin?.clientID = "272173213334-p8jrr2e32nvm1mkef42iq2nn7k2pf9r6.apps.googleusercontent.com";
         
         // notification from appDelegate application
         NotificationCenter.default.addObserver(self, selector: #selector(type(of: self).notifyFromAppDelegate(notification:)), name: Notification.Name.CDVPluginHandleOpenURLWithAppSourceAndAnnotation, object: nil)
@@ -93,7 +98,7 @@ import AuthenticationServices
         // Logout before login
         let loginManger = LoginManager();
         loginManger.logOut();
-        LoginManager().logIn(permissions: ["public_profile"], from: self.topMostController(), handler: self.fbLoginHandler(cordovaCallbackId: command.callbackId))
+        LoginManager().logIn(permissions: ["email", "public_profile"], from: self.topMostController(), handler: self.fbLoginHandler(cordovaCallbackId: command.callbackId))
     }
     
     // for google
@@ -121,6 +126,7 @@ import AuthenticationServices
             request.requestedScopes = [.fullName, .email];
             let controller: ASAuthorizationController = ASAuthorizationController.init(authorizationRequests: [request])
             controller.delegate = self
+            controller.presentationContextProvider = self
             controller.performRequests()
         }
         else {
